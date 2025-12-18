@@ -27,10 +27,9 @@ jobs:
           # get newest version from container registry
           GHCR_TOKEN=$(echo ${{ github.token }} | base64)
           json=$(curl -s -H "Authorization: Bearer $GHCR_TOKEN" https://ghcr.io/v2/${{ github.repository }}/tags/list)
-          echo "debug: $json"
           
           # if it's first release (older releases doesn't exist)
-          if ! echo "$json" | grep -q "\.tags" || echo "$json" | grep -q "NAME_UNKNOWN"; then
+          if ! echo "$json" | grep -q "tags" || echo "$json" | grep -q "NAME_UNKNOWN"; then
             echo "prev_major=0" >> $GITHUB_ENV
             echo "prev_minor=0" >> $GITHUB_ENV
             echo "prev_patch=0" >> $GITHUB_ENV
