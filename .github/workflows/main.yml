@@ -1,0 +1,91 @@
+# == variables ==
+# (optional) CI_DOCKER_CONTEXT: path to context dir (e.g. src/)            default: .
+# (optional) CI_DOCKERFILE:     path to Dockerfile (e.g. build/Dockerfile) default: Dockerfile
+# (optional) CI_BUILD_PARAMS:   any addidional params like --build-arg (In one line or in several, separated by a '\')
+#
+# docs: https://github.com/unikort/wiki/blob/master/deploy/Docker-CI.md
+
+name: "Reusable workflow docker-ci"
+
+on:
+  workflow_call:
+        
+env:
+  version: ${{ inputs.version }}
+  repo: ${{ github.event.repository.name }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      
+      - uses: actions/checkout@v4
+        
+      - name: Определение предыдущей версии
+        run: |
+          # get newest version from container registry
+          GHCR_TOKEN=$(echo ${{ github.token }} | base64)
+          json=$(curl -s -H "Authorization: Bearer $GHCR_TOKEN" https://ghcr.io/v2/${{ github.repository }}/tags/list)
+
+          # if it's first release (older releases doesn't exist)
+          if ! echo "$json" | grep -q "\.tags" || echo "$json" | grep -q "NAME_UNKNOWN"; then
+            echo "prev_major=0" >> $GITHUB_ENV
+            echo "prev_minor=0" >> $GITHUB_ENV
+            echo "prev_patch=0" >> $GITHUB_ENV
+          else
+            tmp=$(echo $json | jq -r '[.tags.[]]
+                                            | map(select(test("v[0-9]+\\.[0-9]+\\.[0-9]+")))  # only vX.Y.Z
+                                            | map(gsub("[^0-9.]"; ""))                        # -> X.Y.Z
+                                            | unique
+                                            | sort_by(split(".") | map(tonumber?))            # sort by each number
+                                            | last')
+
+            echo "prev_major=$(echo $tmp | cut -d. -f1)" >> $GITHUB_ENV
+            echo "prev_minor=$(echo $tmp | cut -d. -f2)" >> $GITHUB_ENV
+            echo "prev_patch=$(echo $tmp | cut -d. -f3)" >> $GITHUB_ENV
+          fi
+
+      - name: Определение новой версии
+        run: |
+          if [[ ${{ env.version }} == "vX.Y.Z" ]]; then
+            echo "major=$prev_major" >> $GITHUB_ENV
+            echo "minor=$prev_minor" >> $GITHUB_ENV
+            echo "patch=$(( $prev_patch + 1 ))" >> $GITHUB_ENV
+          elif [[ ${{ env.version }} =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            tmp=${{ env.version }}
+            tmp="${tmp#v}"
+            echo "major=$(echo $tmp | cut -d. -f1)" >> $GITHUB_ENV
+            echo "minor=$(echo $tmp | cut -d. -f2)" >> $GITHUB_ENV
+            echo "patch=$(echo $tmp | cut -d. -f3)" >> $GITHUB_ENV
+          else
+            echo "::warning::Неверный формат версии. Используй формат vX.Y.Z"
+            exit 1
+          fi
+
+      - name: Валидация новой версии
+        run: |          
+          if (( prev_major > major )) || 
+             (( prev_major == major && prev_minor > minor )) || 
+             (( prev_major == major && prev_minor == minor && prev_patch >= patch )); then
+            echo "::warning::Уже существует релиз с такой же версией или версией выше"
+            exit 1
+          fi
+
+      - name: Рендер нового тега
+        run: |
+          new_tag="v$major.$minor.$patch-${{ github.ref_name }}"
+          echo "new_tag=$new_tag" >> $GITHUB_ENV
+          echo "::notice title=🐳 Docker image tag::$new_tag"
+          
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and push
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}:$new_tag -f "${{ vars.CI_DOCKERFILE:-Dockerfile }}" "${{ vars.CI_DOCKER_CONTEXT:-. }}"
+          docker push ghcr.io/${{ github.repository }}:$new_tag
