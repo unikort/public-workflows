@@ -77,7 +77,10 @@ jobs:
           new_tag="v$major.$minor.$patch-${{ github.ref_name }}"
           echo "new_tag=$new_tag" >> $GITHUB_ENV
           echo "::notice title=🐳 Docker image tag::$new_tag"
-          
+
+      - run: |
+          echo "::debug::CI_BUILD_ARGS start>>${{ vars.CI_BUILD_ARGS }}<<end"
+    
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
