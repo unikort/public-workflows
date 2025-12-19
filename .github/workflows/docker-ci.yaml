@@ -87,5 +87,5 @@ jobs:
 
       - name: Build and push
         run: |
-          docker build ${{ vars.CI_BUILD_ARGS }}-t ghcr.io/${{ github.repository }}:$new_tag -f ${{ vars.CI_DOCKERFILE || 'Dockerfile' }} ${{ vars.CI_DOCKER_CONTEXT || '.' }}
+          docker build ${{ vars.CI_BUILD_ARGS }} -t ghcr.io/${{ github.repository }}:$new_tag -f ${{ vars.CI_DOCKERFILE || 'Dockerfile' }} ${{ vars.CI_DOCKER_CONTEXT || '.' }}
           docker push ghcr.io/${{ github.repository }}:$new_tag
