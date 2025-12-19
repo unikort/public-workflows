@@ -73,9 +73,10 @@ jobs:
           fi
 
       - name: Рендер нового тега
+        id: render
         run: |
           new_tag="v$major.$minor.$patch-${{ github.ref_name }}"
-          echo "new_tag=$new_tag" >> $GITHUB_ENV
+          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
           echo "::notice title=🐳 Docker image tag::$new_tag"
     
       - name: Login to GHCR
@@ -89,13 +90,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
+          file: ${{ vars.CI_DOCKERFILE || 'Dockerfile' }}
+          tags: ghcr.io/${{ github.repository }}:${{ steps.render.outputs.new_tag }}
           context: ${{ vars.CI_DOCKER_CONTEXT || '.' }}
-          tags: ghcr.io/${{ github.repository }}:test
           build-args: |
             ${{ vars.CI_BUILD_ARGS }}
-
-
-      # - name: Build and push
-      #   run: |
-      #     docker build ${{ vars.CI_BUILD_ARGS }} -t ghcr.io/${{ github.repository }}:$new_tag -f ${{ vars.CI_DOCKERFILE || 'Dockerfile' }} ${{ vars.CI_DOCKER_CONTEXT || '.' }}
-      #     docker push ghcr.io/${{ github.repository }}:$new_tag
