@@ -1,7 +1,7 @@
-# == variables ==
-# (optional) CI_DOCKER_CONTEXT: path to context dir (e.g. src/)            default: .
-# (optional) CI_DOCKERFILE:     path to Dockerfile (e.g. build/Dockerfile) default: Dockerfile
-# (optional) CI_BUILD_PARAMS:   any addidional params like --build-arg (In one line or in several, separated by a '\')
+# == variables (GitHub environments are required) ==
+# (optional) CI_DOCKER_CONTEXT: path to context dir (e.g. src/). Default: .
+# (optional) CI_DOCKERFILE:     path to Dockerfile (e.g. build/Dockerfile). Default: Dockerfile
+# (optional) CI_BUILD_ARGS:     any addidional args like --build-arg (In one line or in several, separated by a '\')
 #
 # docs: https://github.com/unikort/wiki/blob/master/deploy/Docker-CI.md
 
@@ -87,5 +87,5 @@ jobs:
 
       - name: Build and push
         run: |
-          docker build -t ghcr.io/${{ github.repository }}:$new_tag -f "${{ vars.CI_DOCKERFILE || 'Dockerfile' }}" "${{ vars.CI_DOCKER_CONTEXT || '.' }}"
+          docker build ${{ vars.CI_BUILD_ARGS }}-t ghcr.io/${{ github.repository }}:$new_tag -f ${{ vars.CI_DOCKERFILE || 'Dockerfile' }} ${{ vars.CI_DOCKER_CONTEXT || '.' }}
           docker push ghcr.io/${{ github.repository }}:$new_tag
