@@ -90,7 +90,7 @@ jobs:
         with:
           push: true
           context: ${{ vars.CI_DOCKER_CONTEXT || '.' }}
-          tags: ghcr.io/${{ github.repository }}:$new_tag
+          tags: ghcr.io/${{ github.repository }}:test
           build-args: |
             ${{ vars.CI_BUILD_ARGS }}
 
