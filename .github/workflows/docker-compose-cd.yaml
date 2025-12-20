@@ -8,9 +8,9 @@
 # == secrets ==
 # CD_SSH_KEY: private SSH key
 #
-# docs: https://github.com/unikort/public-workflows/wiki/Docker-CD
+# docs: https://github.com/unikort/public-workflows/wiki/Docker-Compose-CD
 
-name: "Reusable workflow docker-cd"
+name: "Reusable workflow Docker Compose CD"
 
 on:
   workflow_call:
