@@ -14,6 +14,9 @@ name: "Reusable workflow docker-cd"
 
 on:
   workflow_call:
+    secrets:
+      CD_SSH_KEY:
+        required: true
   
 env:
   repo: ${{ github.event.repository.name }}
