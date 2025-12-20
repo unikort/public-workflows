@@ -1,0 +1,94 @@
+# == variables ==
+# SERVER: address of server to deploy
+# COMPOSE_FILE: path to .yaml file for docker compose
+# VOLUMES_DIR: path to directory which will also transfer to server
+# == secrets ==
+# WORKER_SSH_KEY: private SSH key
+#
+# docs: https://github.com/unikort/wiki/blob/master/deploy/Docker-CD.md
+
+name: "Reusable workflow docker-cd"
+
+on:
+  workflow_call:
+  
+
+env:
+  repo: ${{ github.event.repository.name }}
+  ssh_user: "worker"
+  dest: "/opt/compose/"
+  ssh_opts: "-o StrictHostKeyChecking=no"
+
+jobs:
+      
+  deploy:
+    name: 'deploy to docker compose server'
+    environment: ${{ inputs.environment }}
+    runs-on: ${{ inputs.runner }}
+
+    steps:
+
+      - name: 'Add worker SSH key'
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.WORKER_SSH_KEY }}
+
+      - uses: actions/checkout@v4
+
+      - name: Assertion
+        run: |
+          if [ ! -n "${{ vars.SERVER }}" ]; then
+            echo "::warning title=Variable SERVER not found::Set it: Settings -> Environments -> Variables"
+            exit 1
+          fi
+
+          if [ ! -n "${{ vars.COMPOSE_FILE }}" ]; then
+            echo "::warning title=Variable COMPOSE_FILE not found::Set it: Settings -> Environments -> Variables"
+            exit 1
+          fi
+
+          if [ ! -f "${{ vars.COMPOSE_FILE }}" ]; then
+            echo "::warning title=Compose file not found:: ${{ vars.COMPOSE_FILE }}"
+            exit 1
+          fi
+
+          if [ -n "${{ vars.VOLUMES_DIR }}" ]; then
+            echo "::notice title=📁 Volumes dir::${{ vars.VOLUMES_DIR }}"
+            if [ ! -d "${{ vars.VOLUMES_DIR }}" ]; then
+              echo "::warning title=VOLUMES_DIR is set but directory not found:: ${{ vars.VOLUMES_DIR }}"
+              exit 1
+            fi
+          fi
+
+      - name: Notification
+        run: |
+          echo "::notice title=🚚 Deploy to::${{ vars.SERVER }}:${{ env.dest }}${{ env.repo }}/"
+          echo "::notice title=🐳 Compose file::${{ vars.COMPOSE_FILE }}"
+
+      - name: 'Отправка артефактов на сервер ${{ vars.SERVER }}'
+        run: |
+          set -euo pipefail
+
+          mkdir tmp/
+          mv "${{ vars.COMPOSE_FILE }}" tmp/
+
+          if [ -n "${{ vars.VOLUMES_DIR }}" ]; then
+            mv "${{ vars.VOLUMES_DIR }}" tmp/
+          fi
+
+          rsync -avzP --delete --stats --human-readable \
+          -e "ssh ${{ env.ssh_opts }}" \
+            tmp/ \
+            "${{ env.ssh_user }}@${{ vars.SERVER }}:${{ env.dest }}${{ env.repo }}/"
+
+
+      - name: 'Запуск сервиса'
+        run: |
+          ssh ${{ env.ssh_opts }} ${{ env.ssh_user }}@${{ vars.SERVER }} << 'EOF'
+          echo '${{ github.token }}' | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          cd ${{ env.dest }}${{ env.repo }}
+          export IMAGE_TAG=${{ inputs.image_tag }}
+          docker compose pull
+          docker compose -f ${{ vars.COMPOSE_FILE }} up -d --pull always --force-recreate
+          docker logout ghcr.io
+          EOF
