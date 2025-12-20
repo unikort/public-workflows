@@ -5,7 +5,7 @@
 #
 # docs: https://github.com/unikort/public-workflows/wiki/Docker-CI
 
-name: "Reusable workflow docker-ci"
+name: "Reusable workflow Docker CI"
 
 on:
   workflow_call:
