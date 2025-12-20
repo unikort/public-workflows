@@ -89,6 +89,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           push: true
           file: ${{ vars.CI_DOCKERFILE || 'Dockerfile' }}
           tags: ghcr.io/${{ github.repository }}:${{ steps.render.outputs.new_tag }}
