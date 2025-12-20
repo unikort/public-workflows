@@ -1,9 +1,10 @@
 # == variables (GitHub environments are required) ==
-# CD_SERVER: address of server to deploy
+# CD_SERVER:       address of server to deploy
 # CD_COMPOSE_FILE: path to .yaml file for docker compose
-# (optional) CD_VOLUMES_DIR: path to directory which will also transfer to server
-# (optional) CD_SSH_USER: ssh user. Default: "worker"
-# (optional) CD_SSH_OPTS: additional SSH options. Default: "-o StrictHostKeyChecking=no"
+# (optional) CD_VOLUMES_DIR: path to directory that will also transfer to server along with the compose file
+# (optional) CD_RUNNER:      Actions runner to use.  Default: "self-hosted"
+# (optional) CD_SSH_USER:    user to connect under.  Default: "worker"
+# (optional) CD_SSH_OPTS:    additional SSH options. Default: "-o StrictHostKeyChecking=no"
 # == secrets ==
 # CD_SSH_KEY: private SSH key
 #
