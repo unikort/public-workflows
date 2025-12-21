@@ -1,13 +1,15 @@
-# == variables (Repository-wide) ==
-# (optional) CD_RUNNER:      Actions runner to use.  Default: "self-hosted"
-# == variables (Deployment environments) ==
-# CD_SERVER:       address of server to deploy
-# CD_COMPOSE_FILE: path to .yaml file for docker compose
-# (optional) CD_VOLUMES_DIR: path to directory that will also transfer to server along with the compose file
-# (optional) CD_SSH_USER:    user to connect under.  Default: "worker"
-# (optional) CD_SSH_OPTS:    additional SSH options. Default: "-o StrictHostKeyChecking=no"
-# == secrets ==
+# ==== secrets (Repository-wide) ====
 # CD_SSH_KEY: private SSH key
+#
+# ==== variables (Repository-wide) ====
+# (optional) CD_RUNNER:      Actions runner to use.  Default: "self-hosted"
+#
+# ==== variables (Deployment environments) ====
+#            CD_SERVER:       address of server to deploy
+#            CD_COMPOSE_FILE: path to .yaml file for docker compose
+# (optional) CD_VOLUMES_DIR:  path to directory that will also transfer to server along with the compose file
+# (optional) CD_SSH_USER:     user to connect under.  Default: "worker"
+# (optional) CD_SSH_OPTS:     additional SSH options. Default: "-o StrictHostKeyChecking=no"
 #
 # docs: https://github.com/unikort/public-workflows/wiki/Docker-Compose-CD
 
