@@ -95,6 +95,6 @@ jobs:
           cd ${{ env.dest }}${{ env.repo }}
           export IMAGE_TAG=${{ inputs.image_tag }}
           docker compose pull
-          docker compose -f ${{ vars.CD_COMPOSE_FILE }} up -d --pull always --force-recreate
+          docker compose -f ${{ vars.CD_COMPOSE_FILE }} up -d --pull always --force-recreate --quiet-pull
           docker logout ghcr.io
           EOF
