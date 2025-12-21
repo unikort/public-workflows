@@ -2,7 +2,7 @@
 # CD_SSH_KEY: private SSH key
 #
 # ==== variables (Repository-wide) ====
-# (optional) CD_RUNNER:      Actions runner to use.  Default: "self-hosted"
+# (optional) CD_RUNNER:       actions runner to use.  Default: "self-hosted"
 #
 # ==== variables (Deployment environments) ====
 #            CD_SERVER:       address of server to deploy
