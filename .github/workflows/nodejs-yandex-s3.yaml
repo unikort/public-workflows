@@ -1,0 +1,61 @@
+#   Build NodeJS static frontend & deploy it to Yandex Cloud S3 bucket
+#
+# docs: https://github.com/unikort/public-workflows/wiki/NodeJS-Yandex-S3
+#
+# ----------      secrets (repository-wide)      ---------
+#            
+#            S3_ACCESS_KEY_ID
+#            S3_SECRET_ACCESS_KEY
+#
+# ---------- variables (deployment environments) ----------
+#
+#            NODE_VERSION:    NodeJS version (e.g. 25)
+#            INSTALL_COMMAND: command to install dependencies (e.g. yarn install)
+#            BUILD_COMMAND:   build command (e.g. yarn run build:dev)
+#            DIST_PATH:       path to dir with build artifacts (e.g. ./dist)
+#            S3_BUCKET:       S3 bucket name
+# (optional) LINT_COMMAND:    lint command (e.g. npm run lint)
+
+name: "Reusable workflow NodeJS Yandex S3"
+
+on:
+  workflow_call:
+    secrets:
+      S3_ACCESS_KEY_ID:
+        required: true
+      S3_SECRET_ACCESS_KEY:
+        required: true
+        
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.repository.name }}
+
+jobs:
+  nodejs-yandex-s3:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: "https://${{ vars.S3_BUCKET }}"
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ vars.NODE_VERSION }}'
+          
+      - run: ${{ vars.INSTALL_COMMAND }}
+      
+      - if: ${{ vars.LINT_COMMAND }}
+        run: ${{ vars.LINT_COMMAND }}
+        
+      - run: ${{ vars.BUILD_COMMAND }}
+
+      - name: Deploy to Yandex Cloud S3
+        uses: paulvstrashnov/yandex-s3-upload-action@main
+        with:
+          accessKeyId: ${{ secrets.S3_ACCESS_KEY_ID }}
+          secretAccessKey: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          bucket: ${{ vars.S3_BUCKET }}
+          localPath: ${{ vars.DIST_PATH }}
+          remotePath: "/"
+          clearBucket: true
