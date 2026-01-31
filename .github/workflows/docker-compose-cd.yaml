@@ -20,6 +20,10 @@ on:
     secrets:
       CD_SSH_KEY:
         required: true
+    inputs:
+      image_tag:
+        type: string
+        required: false
   
 env:
   repo: ${{ github.event.repository.name }}
