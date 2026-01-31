@@ -9,14 +9,20 @@ name: "Reusable workflow Docker CI"
 
 on:
   workflow_call:
+    outputs:
+      version:
+        description: "Released image tag"
+        value: ${{ jobs.docker-build.outputs.version }}
         
 env:
   version: ${{ inputs.version }}
   repo: ${{ github.event.repository.name }}
 
 jobs:
-  ci:
+  docker-build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.render.outputs.new_tag }}
     environment: ${{ inputs.environment }}
     steps:
       
